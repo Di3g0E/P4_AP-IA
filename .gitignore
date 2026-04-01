@@ -1,0 +1,18 @@
+# Entorno
+.venv/
+.env
+__pycache__/
+.pytest_cache/
+config/
+
+# Logs
+logs/
+
+# Modelos
+models/
+
+# Datos
+data/
+
+# Checkpoints
+.ipynb_checkpoints/

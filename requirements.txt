@@ -6,3 +6,6 @@ pytest
 groq
 streamlit
 python-dotenv
+langgraph
+langchain-groq
+langchain-core

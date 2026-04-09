@@ -5,7 +5,9 @@ import pandas as pd
 
 from src.data.loader import load_transactions
 from src.models.coach import FinancialCoach
+from src.models.coach_agent import AgentCoach
 from src.models.prompts import build_user_profile
+from src.agent.memory import load_memory
 from src.features.analytics import (
     compute_category_breakdown,
     compute_savings_rate,
@@ -27,14 +29,21 @@ def load_data():
     return load_transactions(DATA_PATH)
 
 
-def init_session():
+def init_session(df: pd.DataFrame):
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    if "use_agent" not in st.session_state:
+        st.session_state.use_agent = True
     if "coach" not in st.session_state:
-        st.session_state.coach = FinancialCoach(
-            api_key=GROQ_API_KEY,
-            model=st.session_state.get("selected_model", DEFAULT_MODEL),
-        )
+        model = st.session_state.get("selected_model", DEFAULT_MODEL)
+        if st.session_state.use_agent:
+            st.session_state.coach = AgentCoach(
+                api_key=GROQ_API_KEY, model=model, df=df,
+            )
+        else:
+            st.session_state.coach = FinancialCoach(
+                api_key=GROQ_API_KEY, model=model, df=df,
+            )
 
 
 # --- Sidebar: perfil financiero ---
@@ -72,6 +81,24 @@ def render_sidebar(df: pd.DataFrame):
         ]).set_index("Categoria")
         st.bar_chart(chart_df)
 
+        # Toggle agente / coach clasico
+        st.divider()
+        use_agent = st.toggle("Modo Agente (LangGraph)", value=st.session_state.use_agent)
+        if use_agent != st.session_state.use_agent:
+            st.session_state.use_agent = use_agent
+            st.session_state.pop("coach", None)
+            st.rerun()
+
+        # Objetivos activos (solo en modo agente)
+        if st.session_state.use_agent:
+            memory = load_memory()
+            goals = memory.get("goals", [])
+            if goals:
+                st.subheader("Objetivos activos")
+                for g in goals:
+                    pct_label = f"{g['category']}: max {g['limit']:.0f} EUR/mes"
+                    st.caption(pct_label)
+
         # Selector de modelo
         st.divider()
         models = {
@@ -88,9 +115,14 @@ def render_sidebar(df: pd.DataFrame):
         new_model = models[selected]
         if st.session_state.get("selected_model") != new_model:
             st.session_state.selected_model = new_model
-            st.session_state.coach = FinancialCoach(
-                api_key=GROQ_API_KEY, model=new_model, df=df
-            )
+            if st.session_state.use_agent:
+                st.session_state.coach = AgentCoach(
+                    api_key=GROQ_API_KEY, model=new_model, df=df,
+                )
+            else:
+                st.session_state.coach = FinancialCoach(
+                    api_key=GROQ_API_KEY, model=new_model, df=df,
+                )
 
         # Boton para recargar datos
         if st.button("Recargar datos"):
@@ -167,7 +199,7 @@ def render_chat(df: pd.DataFrame):
 # --- Main ---
 def main():
     df = load_data()
-    init_session()
+    init_session(df)
     render_sidebar(df)
     render_chat(df)
 

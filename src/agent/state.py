@@ -21,6 +21,7 @@ class UserMemory(TypedDict, total=False):
     goals: list[Goal]
     past_alerts: list[str]
     savings_tips_given: list[str]
+    summary: str  # Resumen acumulado de conversaciones previas
 
 
 class AgentState(TypedDict):

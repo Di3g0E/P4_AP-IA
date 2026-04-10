@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from langchain_core.messages import AIMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, SystemMessage
 from langchain_groq import ChatGroq
 from langgraph.graph import END, StateGraph
 from langgraph.prebuilt import ToolNode
@@ -19,6 +19,11 @@ from src.agent.tools import (
 )
 from src.features.analytics import compute_monthly_summary
 from src.models.prompts import build_user_profile
+from src.utils.config import (
+    KEEP_RECENT_MESSAGES,
+    SUMMARIZATION_THRESHOLD,
+    SUMMARY_MAX_TOKENS,
+)
 
 import pandas as pd
 
@@ -42,7 +47,22 @@ OBJETIVOS ACTIVOS:
 {goals}
 
 ALERTAS ACTUALES:
-{alerts}"""
+{alerts}
+{summary_section}"""
+
+
+SUMMARY_SYSTEM_PROMPT = """\
+Eres un asistente que resume conversaciones entre un usuario y su coach financiero.
+
+Tu tarea: producir un resumen conciso (maximo 200 palabras) que capture:
+- Temas tratados (ahorro, gastos, inversiones, conceptos financieros, objetivos...)
+- Datos financieros relevantes mencionados (cifras, categorias, periodos)
+- Decisiones tomadas o consejos dados
+- Objetivos definidos o modificados
+- Preferencias del usuario que hayas detectado
+
+Escribe el resumen en espanol, en tercera persona, en parrafos cortos.
+Si hay un resumen previo, integralo con la nueva informacion sin duplicar."""
 
 
 def build_graph(
@@ -59,9 +79,12 @@ def build_graph(
     # Perfil precalculado (se usa en el system prompt)
     profile_text = build_user_profile(df)
 
-    # LLM con tools bindeadas
+    # LLM con tools bindeadas (para el agente principal)
     llm = ChatGroq(api_key=api_key, model=model, temperature=0.5)
     llm_with_tools = llm.bind_tools(ALL_TOOLS)
+
+    # LLM dedicado a resumir (sin tools, mas determinista, max_tokens limitado)
+    summarizer_llm = ChatGroq(api_key=api_key, model=model, temperature=0.2, max_tokens=SUMMARY_MAX_TOKENS)
 
     # ── Nodos ────────────────────────────────────────────────────────
 
@@ -74,11 +97,70 @@ def build_graph(
             "current_alerts": [],
         }
 
+    def summarize_node(state: AgentState) -> dict:
+        """Resume conversaciones largas para no superar la ventana de contexto.
+
+        Si state['messages'] supera SUMMARIZATION_THRESHOLD, toma todos los mensajes
+        excepto los KEEP_RECENT_MESSAGES mas recientes, los pasa por un LLM resumidor
+        y los reemplaza por un unico resumen guardado en memory['summary'].
+        """
+        messages = state["messages"]
+        if len(messages) <= SUMMARIZATION_THRESHOLD:
+            return {}  # noop si no se ha alcanzado el umbral
+
+        memory = dict(state.get("memory", {}))
+        previous_summary = memory.get("summary", "")
+
+        # Mensajes a resumir: todos menos los KEEP_RECENT mas recientes
+        to_summarize = messages[:-KEEP_RECENT_MESSAGES]
+
+        # Convertir mensajes a texto plano
+        conv_lines = []
+        for m in to_summarize:
+            content = getattr(m, "content", None)
+            if not content:
+                continue
+            role = m.__class__.__name__.replace("Message", "")
+            conv_lines.append(f"{role}: {content}")
+        conv_text = "\n".join(conv_lines)
+
+        # Construir prompt: si ya hay resumen previo, integrarlo
+        if previous_summary:
+            user_content = (
+                f"RESUMEN PREVIO DE LA CONVERSACION:\n{previous_summary}\n\n"
+                f"NUEVOS MENSAJES A INTEGRAR:\n{conv_text}\n\n"
+                "Produce un resumen actualizado que combine ambos."
+            )
+        else:
+            user_content = (
+                f"Resume la siguiente conversacion:\n\n{conv_text}"
+            )
+
+        summary_response = summarizer_llm.invoke([
+            SystemMessage(content=SUMMARY_SYSTEM_PROMPT),
+            HumanMessage(content=user_content),
+        ])
+        new_summary = summary_response.content
+
+        # Persistir el nuevo resumen en memoria
+        memory["summary"] = new_summary
+
+        # Eliminar los mensajes resumidos del estado via RemoveMessage
+        delete_msgs = [
+            RemoveMessage(id=m.id) for m in to_summarize if getattr(m, "id", None)
+        ]
+
+        return {
+            "messages": delete_msgs,
+            "memory": memory,
+        }
+
     def agent_node(state: AgentState) -> dict:
         """Invoca al LLM con el system prompt, historial y tools."""
         memory = state.get("memory", {})
         goals = memory.get("goals", [])
         alerts = state.get("current_alerts", [])
+        summary = memory.get("summary", "")
 
         # Formatear goals para el prompt
         if goals:
@@ -91,10 +173,17 @@ def build_graph(
 
         alerts_text = "\n".join(f"- {a}" for a in alerts) if alerts else "Sin alertas."
 
+        # Bloque de resumen: solo si existe
+        if summary:
+            summary_section = f"\nRESUMEN DE CONVERSACIONES PREVIAS:\n{summary}\n"
+        else:
+            summary_section = ""
+
         sys_msg = SystemMessage(content=SYSTEM_PROMPT.format(
             profile=profile_text,
             goals=goals_text,
             alerts=alerts_text,
+            summary_section=summary_section,
         ))
 
         # Ensamblar mensajes: system + historial de conversacion
@@ -161,13 +250,15 @@ def build_graph(
     graph = StateGraph(AgentState)
 
     graph.add_node("load_memory", load_memory_node)
+    graph.add_node("summarize", summarize_node)
     graph.add_node("agent", agent_node)
     graph.add_node("tools", tool_node)
     graph.add_node("check_goals", check_goals_node)
     graph.add_node("save_memory", save_memory_node)
 
     graph.set_entry_point("load_memory")
-    graph.add_edge("load_memory", "agent")
+    graph.add_edge("load_memory", "summarize")
+    graph.add_edge("summarize", "agent")
     graph.add_conditional_edges("agent", should_continue, {
         "tools": "tools",
         "check_goals": "check_goals",

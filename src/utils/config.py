@@ -19,3 +19,8 @@ MAX_HISTORY_TURNS = 10
 MAX_RELEVANT_TRANSACTIONS = 20
 LLM_TEMPERATURE = 0.7
 LLM_MAX_TOKENS = 1024
+
+# Parametros del agente LangGraph
+SUMMARIZATION_THRESHOLD = 20   # Si state["messages"] supera N items, resumir
+KEEP_RECENT_MESSAGES = 6       # Mensajes mas recientes que se preservan literalmente
+SUMMARY_MAX_TOKENS = 400       # Tokens maximos del resumen generado

@@ -27,8 +27,11 @@ def load_memory(user_id: str = "default", base_dir: Path | None = None) -> UserM
             goals=data.get("goals", []),
             past_alerts=data.get("past_alerts", []),
             savings_tips_given=data.get("savings_tips_given", []),
+            summary=data.get("summary", ""),
         )
-    return UserMemory(goals=[], past_alerts=[], savings_tips_given=[])
+    return UserMemory(
+        goals=[], past_alerts=[], savings_tips_given=[], summary=""
+    )
 
 
 def save_memory(

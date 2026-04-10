@@ -2,7 +2,6 @@
 
 import json
 import pytest
-from pathlib import Path
 
 from src.agent.memory import load_memory, save_memory
 from src.agent.state import UserMemory
@@ -79,3 +78,30 @@ class TestMemory:
         bob = load_memory("bob", base_dir=tmp_memory_dir)
         assert alice["past_alerts"] == ["alert_a"]
         assert bob["past_alerts"] == ["alert_b"]
+
+    def test_summary_field_default_empty(self, tmp_memory_dir):
+        memory = load_memory("new_user", base_dir=tmp_memory_dir)
+        assert "summary" in memory
+        assert memory["summary"] == ""
+
+    def test_summary_persistence_roundtrip(self, tmp_memory_dir):
+        memory = UserMemory(
+            goals=[],
+            past_alerts=[],
+            savings_tips_given=[],
+            summary="El usuario quiere ahorrar 500 EUR para julio.",
+        )
+        save_memory(memory, "user_summary", base_dir=tmp_memory_dir)
+        loaded = load_memory("user_summary", base_dir=tmp_memory_dir)
+        assert loaded["summary"] == "El usuario quiere ahorrar 500 EUR para julio."
+
+    def test_summary_loaded_from_legacy_file(self, tmp_memory_dir):
+        """Memorias antiguas sin campo 'summary' se cargan con string vacio."""
+        import json
+        path = tmp_memory_dir / "legacy.json"
+        tmp_memory_dir.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"goals": [], "past_alerts": [], "savings_tips_given": []}, f)
+
+        loaded = load_memory("legacy", base_dir=tmp_memory_dir)
+        assert loaded["summary"] == ""

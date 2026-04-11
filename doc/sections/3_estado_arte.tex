@@ -1,0 +1,26 @@
+\section{Estado del Arte}
+\label{sec:estado_arte}
+
+El campo de la tecnología financiera personal (FinTech) ha evolucionado significativamente en la última década \cite{fintech2023}. Esta sección analiza las principales aproximaciones tecnológicas existentes y posiciona nuestra propuesta dentro del panorama actual.
+
+\subsection{Sistemas Tradicionales de Gestión Financiera}
+\label{subsec:sistemas_tradicionales}
+
+Las aplicaciones convencionales se clasifican en tres categorías principales. Las hojas de cálculo y software de contabilidad ofrecen flexibilidad pero requieren intervención manual constante \cite{personal_finance_ai2024}. Las aplicaciones de agregación bancaria como Mint o YNAB automatizan la importación de datos pero mantienen un enfoque reactivo, limitándose a presentar información histórica sin capacidad de interpretación contextual \cite{conversational_ai2023}. Los robo-advisors automatizan inversiones pero su ámbito se restringe exclusivamente a la gestión de patrimonios.
+
+\subsection{Técnicas de Procesamiento de Lenguaje Natural en Finanzas}
+\label{subsec:pln_finanzas}
+
+La aplicación de PLN al dominio financiero ha abierto nuevas posibilidades \cite{nlp_finance2023}. Los primeros sistemas utilizaron técnicas de clasificación supervisada como Naive Bayes y SVM, logrando precisiones aceptables (70-85\%) pero con rigidez ante nuevos patrones. El análisis de sentimiento ha permitido detectar estrés financiero, aunque enfrenta desafíos por la subjetividad del lenguaje. Las técnicas de NER con modelos basados en transformers como BERT han mejorado la precisión en extracción de entidades, pero requieren grandes volúmenes de datos etiquetados.
+
+\subsection{Agentes Conversacionales en Dominios Especializados}
+\label{subsec:agentes_conversacionales}
+
+Los recientes avances en LLMs han impulsado el desarrollo de agentes conversacionales especializados \cite{tool_using_agents2023}. Los primeros sistemas utilizaban árboles de decisión y reglas predefinidas, demostrando ser frágiles ante variaciones en el lenguaje. Las arquitecturas seq-to-seq y modelos basados en transformers permitieron generar respuestas más naturales pero seguían limitados por su naturaleza sin estado.
+
+La generación más reciente de agentes con herramientas (tool-using agents) representa un avance fundamental \cite{langchain2023}. Sistemas como AutoGPT y los agentes LangGraph permiten que los modelos de lenguaje no solo procesen texto, sino que también ejecuten acciones y realicen análisis complejos.
+
+\subsection{Arquitecturas de Agentes Basados en Grafos}
+\label{subsec:arquitecturas_grafos}
+
+LangGraph emerge como una de las arquitecturas más prometedoras para el desarrollo de agentes complejos \cite{langgraph2024}. A diferencia de los sistemas sin estado, LangGraph permite mantener información contextual entre múltiples interacciones, fundamental para asistentes financieros personales \cite{memory_in_agents2023}. La arquitectura de grafos permite encadenar múltiples operaciones de razonamiento y seleccionar dinámicamente qué herramientas utilizar basándose en el contexto específico de cada consulta.

@@ -1,0 +1,34 @@
+\section{Propuesta y Desarrollo}
+\label{sec:propuesta}
+
+La propuesta técnica se fundamenta en el diseño de un agente conversacional inteligente especializado en asesoramiento financiero personal \cite{langgraph2024}. El sistema combina procesamiento de lenguaje natural con análisis financiero estructurado, implementando una arquitectura dual que permite comparar un agente LangGraph frente a una implementación clásica basada en clasificación de intenciones.
+
+\subsection{Arquitectura del Sistema}
+\label{subsec:arquitectura}
+
+El sistema sigue una arquitectura modular con cuatro capas principales. La capa de presentación utiliza Streamlit \cite{streamlit2021} para proporcionar una interfaz web interactiva con métricas financieras y chat conversacional. La capa de agentes contiene dos implementaciones paralelas: el agente LangGraph con grafo de estado y el coach clásico con clasificador de intenciones. La capa de analytics implementa el motor de análisis financiero con doce funciones especializadas \cite{pandas2020}. La capa de datos gestiona la carga y procesamiento de transacciones mediante pandas y JSON para persistencia.
+
+\subsection{Agente LangGraph}
+\label{subsec:agente_langgraph}
+
+El componente central implementa un grafo con cinco nodos \cite{langgraph2024}: load\_memory carga el estado persistente, agent invoca al LLM con acceso a doce herramientas, tools ejecuta las herramientas seleccionadas, check\_goals evalúa objetivos de ahorro, y save\_memory persiste el estado actualizado. El agente puede encadenar múltiples herramientas mediante bucle ReAct \cite{react2022}.
+
+\subsection{Coach Clásico}
+\label{subsec:coach_clasico}
+
+La implementación clásica sirve como línea base para evaluar las mejoras introducidas por la arquitectura LangGraph. Utiliza un clasificador basado en keywords que categoriza las consultas en cuatro intenciones: savings\_advice, concept\_explanation, spending\_query y general\_chat. Para cada intención, el sistema ensambla un contexto fijo con datos preseleccionados y plantillas de respuesta específicas.
+
+\subsection{Motor de Análisis Financiero}
+\label{subsec:motor_analisis}
+
+El motor de analytics procesa aproximadamente 900 transacciones mensuales mediante pandas \cite{pandas2020}. Implementa doce funciones especializadas que incluyen resúmenes mensuales, análisis de tendencias, desglose por categoría, detección de anomalías y gestión de gastos recurrentes. El sistema utiliza técnicas estadísticas basadas en desviación estándar y percentiles para identificar patrones anómalos y generar alertas personalizadas.
+
+\subsection{Sistema de Memoria Persistente}
+\label{subsec:memoria_persistente}
+
+La memoria persistente permite al sistema mantener estado entre sesiones \cite{memory_in_agents2023}. Los usuarios pueden establecer objetivos de gasto máximo mensual por categoría, que se almacenan en archivos JSON individuales. El sistema monitorea continuamente el progreso hacia estos objetivos y genera alertas automáticas cuando el gasto actual supera el 80\% del límite establecido.
+
+\subsection{Implementación Técnica}
+\label{subsec:implementacion_tecnica}
+
+El proyecto se implementa utilizando Python 3.12 con LangGraph \cite{langgraph2024}, Groq API para el modelo Llama 3.3 70B \cite{groq2024}, Streamlit para la interfaz \cite{streamlit2021} y pandas para el análisis de datos \cite{pandas2020}.

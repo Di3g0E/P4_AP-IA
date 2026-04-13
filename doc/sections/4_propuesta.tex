@@ -1,17 +1,17 @@
 \section{Propuesta y Desarrollo}
 \label{sec:propuesta}
 
-La propuesta técnica se fundamenta en el diseño de un agente conversacional inteligente especializado en asesoramiento financiero personal \cite{langgraph2024}. El sistema combina procesamiento de lenguaje natural con análisis financiero estructurado, implementando una arquitectura dual que permite comparar un agente LangGraph frente a una implementación clásica basada en clasificación de intenciones.
+La propuesta técnica se fundamenta en el diseño de un agente conversacional inteligente especializado en asesoramiento financiero personal. El sistema combina procesamiento de lenguaje natural con análisis financiero estructurado, implementando una arquitectura dual que permite comparar un agente LangGraph frente a una implementación clásica basada en clasificación de intenciones.
 
 \subsection{Arquitectura del Sistema}
 \label{subsec:arquitectura}
 
-El sistema sigue una arquitectura modular con cuatro capas principales. La capa de presentación utiliza Streamlit \cite{streamlit2021} para proporcionar una interfaz web interactiva con métricas financieras y chat conversacional. La capa de agentes contiene dos implementaciones paralelas: el agente LangGraph con grafo de estado y el coach clásico con clasificador de intenciones. La capa de analytics implementa el motor de análisis financiero con doce funciones especializadas \cite{pandas2020}. La capa de datos gestiona la carga y procesamiento de transacciones mediante pandas y JSON para persistencia.
+El sistema sigue una arquitectura modular con cuatro capas principales. La capa de presentación utiliza Streamlit para proporcionar una interfaz web interactiva con métricas financieras y chat conversacional. La capa de agentes contiene dos implementaciones paralelas: el agente LangGraph con grafo de estado y el coach clásico con clasificador de intenciones. La capa de analytics implementa el motor de análisis financiero con doce funciones especializadas. La capa de datos gestiona la carga y procesamiento de transacciones mediante pandas y JSON para persistencia.
 
 \subsection{Agente LangGraph}
 \label{subsec:agente_langgraph}
 
-El componente central implementa un grafo con seis nodos \cite{langgraph2024}: load\_memory carga el estado persistente, summarize gestiona el resumen automático de conversaciones largas, agent invoca al LLM con acceso a doce herramientas, tools ejecuta las herramientas seleccionadas, check\_goals evalúa objetivos de ahorro, y save\_memory persiste el estado actualizado. El agente puede encadenar múltiples herramientas mediante bucle ReAct \cite{react2022}.
+El componente central implementa un grafo con seis nodos: load\_memory carga el estado persistente, summarize gestiona el resumen automático de conversaciones largas, agent invoca al LLM con acceso a doce herramientas, tools ejecuta las herramientas seleccionadas, check\_goals evalúa objetivos de ahorro, y save\_memory persiste el estado actualizado. El agente puede encadenar múltiples herramientas mediante bucle ReAct \cite{react2022}.
 
 \subsection{Coach Clásico}
 \label{subsec:coach_clasico}
@@ -21,14 +21,14 @@ La implementación clásica sirve como línea base para evaluar las mejoras intr
 \subsection{Motor de Análisis Financiero}
 \label{subsec:motor_analisis}
 
-El motor de analytics procesa aproximadamente 900 transacciones mensuales mediante pandas \cite{pandas2020}. Implementa trece funciones especializadas que incluyen resúmenes mensuales, análisis de tendencias, desglose por categoría, detección de anomalías, gestión de gastos recurrentes y análisis de inversiones. El sistema utiliza técnicas estadísticas basadas en desviación estándar y percentiles para identificar patrones anómalos y generar alertas personalizadas. Adicionalmente, el módulo de inversiones analiza automáticamente diferentes instrumentos financieros como Letras del Tesoro, acciones Apple, S\&P 500, Bitcoin, planes de pensiones y fondos de inversión, proporcionando un resumen completo del portafolio de inversión del usuario.
+El motor de analytics procesa aproximadamente 900 transacciones mensuales mediante pandas. Implementa trece funciones especializadas que incluyen resúmenes mensuales, análisis de tendencias, desglose por categoría, detección de anomalías, gestión de gastos recurrentes y análisis de inversiones. El sistema utiliza técnicas estadísticas basadas en desviación estándar y percentiles para identificar patrones anómalos y generar alertas personalizadas. Adicionalmente, el módulo de inversiones analiza automáticamente diferentes instrumentos financieros como Letras del Tesoro, acciones Apple, S\&P 500, Bitcoin, planes de pensiones y fondos de inversión, proporcionando un resumen completo del portafolio de inversión del usuario.
 
-Las doce herramientas disponibles para el agente LangGraph se dividen en tres categorías: ocho herramientas de análisis financiero (monthly\_summary, spending\_trends, category\_breakdown, savings\_rate, anomalies, recurring\_expenses, top\_expenses, search\_by\_description) y cuatro herramientas de gestión de objetivos (set\_goal, check\_goal\_progress, list\_goals, remove\_goal).
+Las trece herramientas disponibles para el agente LangGraph se dividen en dos categorías: nueve herramientas de análisis financiero (monthly\_summary, spending\_trends, category\_breakdown, savings\_rate, anomalies, recurring\_expenses, top\_expenses, search\_by\_description, investment\_summary) y cuatro herramientas de gestión de objetivos (set\_goal, check\_goal\_progress, list\_goals, remove\_goal).
 
 \subsection{Sistema de Memoria Persistente}
 \label{subsec:memoria_persistente}
 
-La memoria persistente permite al sistema mantener estado entre sesiones \cite{memory_in_agents2023}. Los usuarios pueden establecer objetivos de gasto máximo mensual por categoría, que se almacenan en archivos JSON individuales. El sistema monitorea continuamente el progreso hacia estos objetivos y genera alertas automáticas cuando el gasto actual supera el 80\% del límite establecido.
+La memoria persistente permite al sistema mantener estado entre sesiones. Los usuarios pueden establecer objetivos de gasto máximo mensual por categoría, que se almacenan en archivos JSON individuales. El sistema monitorea continuamente el progreso hacia estos objetivos y genera alertas automáticas cuando el gasto actual supera el 80\% del límite establecido.
 
 Adicionalmente, el sistema implementa un mecanismo de resumen automático de conversaciones que se activa cuando el historial supera un umbral predefinido. Un LLM dedicado genera resúmenes concisos que capturan temas tratados, datos financieros relevantes y decisiones tomadas. Estos resúmenes se persisten en memoria y permiten mantener conversaciones largas sin exceder la ventana de contexto del modelo principal.
 

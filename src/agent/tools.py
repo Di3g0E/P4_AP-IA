@@ -16,6 +16,7 @@ from src.features.analytics import (
     compute_savings_rate,
     compute_spending_trends,
     detect_anomalies,
+    compute_investment_summary,
 )
 from src.data.retrieval import (
     get_top_expenses,
@@ -98,6 +99,13 @@ def anomalies() -> str:
 def recurring_expenses() -> str:
     """Lista gastos recurrentes detectados (suscripciones, facturas periodicas)."""
     data = compute_recurring_expenses(_get_df())
+    return json.dumps(data, ensure_ascii=False, default=str)
+
+
+@tool
+def investment_summary() -> str:
+    """Proporciona un resumen del portafolio del usuario: Letras del Tesoro, Apple, Bitcoin, etc."""
+    data = compute_investment_summary(_get_df())
     return json.dumps(data, ensure_ascii=False, default=str)
 
 
@@ -203,6 +211,7 @@ ALL_TOOLS = [
     savings_rate,
     anomalies,
     recurring_expenses,
+    investment_summary,
     top_expenses,
     search_by_description,
     set_goal,

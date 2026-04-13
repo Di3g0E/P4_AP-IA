@@ -17,3 +17,23 @@ data/
 
 # Checkpoints
 .ipynb_checkpoints/
+
+
+# Documentación (todo menos el pdf final)
+doc/*.aux
+doc/*.log
+doc/*.out
+doc/*.toc
+doc/*.synctex.gz
+doc/*.bbl
+doc/*.blg
+doc/*.lof
+doc/*.lot
+doc/*.nav
+doc/*.snm
+doc/*.vrb
+doc/*.spl
+doc/*.run.xml
+doc/*.synctex.gz
+doc/*.synctex(busy)
+doc/*.synctex

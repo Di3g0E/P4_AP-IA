@@ -11,7 +11,7 @@ El sistema sigue una arquitectura modular con cuatro capas principales. La capa 
 \subsection{Agente LangGraph}
 \label{subsec:agente_langgraph}
 
-El componente central implementa un grafo con cinco nodos \cite{langgraph2024}: load\_memory carga el estado persistente, agent invoca al LLM con acceso a doce herramientas, tools ejecuta las herramientas seleccionadas, check\_goals evalúa objetivos de ahorro, y save\_memory persiste el estado actualizado. El agente puede encadenar múltiples herramientas mediante bucle ReAct \cite{react2022}.
+El componente central implementa un grafo con seis nodos \cite{langgraph2024}: load\_memory carga el estado persistente, summarize gestiona el resumen automático de conversaciones largas, agent invoca al LLM con acceso a doce herramientas, tools ejecuta las herramientas seleccionadas, check\_goals evalúa objetivos de ahorro, y save\_memory persiste el estado actualizado. El agente puede encadenar múltiples herramientas mediante bucle ReAct \cite{react2022}.
 
 \subsection{Coach Clásico}
 \label{subsec:coach_clasico}
@@ -21,14 +21,18 @@ La implementación clásica sirve como línea base para evaluar las mejoras intr
 \subsection{Motor de Análisis Financiero}
 \label{subsec:motor_analisis}
 
-El motor de analytics procesa aproximadamente 900 transacciones mensuales mediante pandas \cite{pandas2020}. Implementa doce funciones especializadas que incluyen resúmenes mensuales, análisis de tendencias, desglose por categoría, detección de anomalías y gestión de gastos recurrentes. El sistema utiliza técnicas estadísticas basadas en desviación estándar y percentiles para identificar patrones anómalos y generar alertas personalizadas.
+El motor de analytics procesa aproximadamente 900 transacciones mensuales mediante pandas \cite{pandas2020}. Implementa trece funciones especializadas que incluyen resúmenes mensuales, análisis de tendencias, desglose por categoría, detección de anomalías, gestión de gastos recurrentes y análisis de inversiones. El sistema utiliza técnicas estadísticas basadas en desviación estándar y percentiles para identificar patrones anómalos y generar alertas personalizadas. Adicionalmente, el módulo de inversiones analiza automáticamente diferentes instrumentos financieros como Letras del Tesoro, acciones Apple, S\&P 500, Bitcoin, planes de pensiones y fondos de inversión, proporcionando un resumen completo del portafolio de inversión del usuario.
+
+Las doce herramientas disponibles para el agente LangGraph se dividen en tres categorías: ocho herramientas de análisis financiero (monthly\_summary, spending\_trends, category\_breakdown, savings\_rate, anomalies, recurring\_expenses, top\_expenses, search\_by\_description) y cuatro herramientas de gestión de objetivos (set\_goal, check\_goal\_progress, list\_goals, remove\_goal).
 
 \subsection{Sistema de Memoria Persistente}
 \label{subsec:memoria_persistente}
 
 La memoria persistente permite al sistema mantener estado entre sesiones \cite{memory_in_agents2023}. Los usuarios pueden establecer objetivos de gasto máximo mensual por categoría, que se almacenan en archivos JSON individuales. El sistema monitorea continuamente el progreso hacia estos objetivos y genera alertas automáticas cuando el gasto actual supera el 80\% del límite establecido.
 
+Adicionalmente, el sistema implementa un mecanismo de resumen automático de conversaciones que se activa cuando el historial supera un umbral predefinido. Un LLM dedicado genera resúmenes concisos que capturan temas tratados, datos financieros relevantes y decisiones tomadas. Estos resúmenes se persisten en memoria y permiten mantener conversaciones largas sin exceder la ventana de contexto del modelo principal.
+
 \subsection{Implementación Técnica}
 \label{subsec:implementacion_tecnica}
 
-El proyecto se implementa utilizando Python 3.12 con LangGraph \cite{langgraph2024}, Groq API para el modelo Llama 3.3 70B \cite{groq2024}, Streamlit para la interfaz \cite{streamlit2021} y pandas para el análisis de datos \cite{pandas2020}.
+El proyecto se implementa utilizando Python 3.12 con LangGraph \cite{langgraph2024}, Groq API para los modelos de lenguaje \cite{groq2024}, Streamlit para la interfaz \cite{streamlit2021} y pandas para el análisis de datos \cite{pandas2020}. La aplicación soporta cuatro modelos LLM diferentes: Llama 3.3 70B (modelo por defecto), Llama 3.1 8B, Mixtral 8x7B y Gemma 2 9B, permitiendo al usuario seleccionar el balance óptimo entre calidad de respuesta y velocidad de procesamiento según sus necesidades.

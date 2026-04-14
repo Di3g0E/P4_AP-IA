@@ -1,13 +1,44 @@
 \section{Conclusiones y Trabajo Futuro}
 \label{sec:conclusiones}
 
-El proyecto tiene implicaciones significativas tanto a nivel técnico como social. Demuestra la viabilidad de utilizar arquitecturas de agentes avanzados en aplicaciones prácticas del mundo real, superando las limitaciones de los chatbots tradicionales. Las herramientas de asesoramiento financiero inteligente pueden ayudar a democratizar el acceso a consejos financieros personalizados, tradicionalmente reservados para personas con altos ingresos o conocimientos especializados.
+\subsection{Conclusiones Técnicas}
+\label{subsec:conclusiones_tecnicas}
 
-En conclusión, el Coach Financiero Generativo representa no solo un éxito técnico en la implementación de agentes inteligentes, sino también una contribución significativa al campo de la tecnología financiera personal, estableciendo un nuevo estándar para las aplicaciones de asesoramiento financiero basadas en IA.
+El proyecto demuestra la viabilidad de implementar un sistema de asesoramiento financiero personal basado en agentes LangGraph con memoria persistente, superando de manera cualitativa las limitaciones del enfoque clásico basado en clasificación de intenciones.
+
+La comparativa entre el Coach Clásico y el Agente LangGraph revela diferencias sustanciales en tres escenarios concretos. En preguntas compuestas como \textit{``¿cuánto gasto en ocio y qué tendencia tiene?''}, el agente encadena \texttt{category\_breakdown} y \texttt{spending\_trends} automáticamente, mientras que el coach clásico cae en un único intent con contexto parcial. En preguntas ambiguas, el LLM interpreta la intención semánticamente en lugar de depender de keywords exactos, eliminando la fragilidad del clasificador de reglas. Y en consultas de seguimiento entre sesiones, la memoria persistente permite respuestas como \textit{``llevas el 85\% de tu objetivo en restaurantes''} sin que el usuario haya mencionado dicho objetivo en la sesión actual.
+
+El nodo de resumen automático resuelve de manera elegante el problema de la ventana de contexto finita. La estrategia de resumen acumulativo —que integra resúmenes anteriores con nuevos mensajes— permite mantener la coherencia narrativa de conversaciones de semanas o meses sin coste proporcional en tokens.
+
+La decisión de usar retrieval estructurado con pandas en lugar de RAG con embeddings se valida: los datos son tabulares con columnas tipadas, los filtros exactos son más precisos y la latencia es menor. Para este volumen de datos (~900 transacciones) no existe justificación para la complejidad añadida de un sistema de embeddings.
+
+\subsection{Contribuciones del Proyecto}
+\label{subsec:contribuciones}
+
+Las contribuciones principales de este trabajo son tres:
+
+\begin{enumerate}
+    \item \textbf{Arquitectura de referencia}: El diseño del grafo de seis nodos (load\_memory $\rightarrow$ summarize $\rightarrow$ agent $\leftrightarrow$ tools $\rightarrow$ check\_goals $\rightarrow$ save\_memory) constituye una plantilla reutilizable para cualquier agente de dominio específico que requiera memoria persistente y gestión de contexto.
+
+    \item \textbf{Patrón de objetivos con alertas}: El sistema de goals (set/check/list/remove) combinado con el nodo \texttt{check\_goals} y la deduplicación por \texttt{past\_alerts} proporciona una solución a la notificación proactiva no invasiva en agentes conversacionales.
+
+    \item \textbf{Evaluación comparativa dual}: Mantener ambas implementaciones (clásica y LangGraph) accesibles mediante toggle permite a los usuarios experimentar la diferencia directamente, lo que tiene valor pedagógico significativo en el contexto de la asignatura.
+\end{enumerate}
+
+\subsection{Implicaciones Sociales}
+\label{subsec:implicaciones}
+
+El proyecto tiene implicaciones significativas tanto a nivel técnico como social. Las herramientas de asesoramiento financiero inteligente pueden ayudar a democratizar el acceso a consejos financieros personalizados, tradicionalmente reservados para personas con altos ingresos o asesores especializados. Un sistema que recuerda los objetivos del usuario, genera alertas automáticas y explica conceptos financieros usando los propios datos del usuario tiene el potencial de mejorar la educación financiera de la población general.
 
 \subsection{Trabajo Futuro}
 \label{subsec:trabajo_futuro}
 
-Basándonos en los resultados y limitaciones identificadas, proponemos varias líneas de desarrollo futuro. Una de las más prometedoras es la integración con las prácticas anteriores del curso, creando un ecosistema financiero personal completo. La incorporación de capacidades predictivas mediante los modelos de machine learning desarrollados en prácticas anteriores podría anticipar tendencias de gasto futuras y recomendar estrategias de ahorro proactivas.
+Basándonos en los resultados y las limitaciones identificadas, proponemos las siguientes líneas de desarrollo futuro:
 
-La extensión del sistema para integrar las herramientas de análisis de datos de la práctica 2 y las capacidades de visualización de la práctica 3 permitiría crear una plataforma unificada. La integración con APIs bancarias directas podría eliminar la necesidad de importación manual de datos.
+\textbf{Integración con las prácticas anteriores:} La incorporación de las capacidades predictivas de los modelos Random Forest y ARIMA de la Práctica 1 añadiría una herramienta \texttt{predict\_next\_month(category)} al agente, permitiéndole anticipar tendencias en lugar de solo analizar el pasado. El clasificador SGDClassifier de la Práctica 2 podría integrarse como herramienta \texttt{classify\_transaction(description)} para categorizar automáticamente transacciones sin etiqueta. El pipeline OCR de la Práctica 3 añadiría una herramienta \texttt{extract\_total\_from\_receipt(image\_path)} para registrar facturas directamente mediante fotografía.
+
+\textbf{Arquitectura multi-agente:} El siguiente nivel natural de evolución sería sustituir el agente único por un sistema multi-agente, donde un supervisor delega subtareas a agentes especializados (analista, clasificador, OCR) que operan en paralelo. Esta arquitectura mejoraría la latencia en consultas complejas y facilitaría la actualización independiente de cada componente.
+
+\textbf{Evaluación cuantitativa:} La implementación de un benchmark con preguntas etiquetadas permitiría medir objetivamente la precisión de las respuestas del agente frente al coach clásico, en lugar de depender únicamente de evaluación cualitativa.
+
+\textbf{Integración con APIs bancarias:} La conexión directa con PSD2 o agregadores como Plaid eliminaría la necesidad de importación manual de datos, transformando el sistema en una aplicación de uso diario completamente autónoma.

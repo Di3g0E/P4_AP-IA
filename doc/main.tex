@@ -2,7 +2,7 @@
 
 % --- Paquetes básicos ---
 \usepackage[utf8]{inputenc}
-\usepackage[spanish]{babel}
+\usepackage[spanish, es-noshorthands]{babel}
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{amsmath, amsfonts, amssymb}
@@ -16,6 +16,51 @@
 \usepackage[style=ieee, backend=biber]{biblatex}
 \addbibresource{references.bib}
 \usepackage{placeins}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds, babel}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{array}
+
+% --- Configuración de listings para Python ---
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{gray!40},
+    language=Python
+}
+
+\lstdefinestyle{jsonstyle}{
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{gray!40},
+    captionpos=b,
+    stringstyle=\color{codepurple},
+    keywordstyle=\color{blue},
+    numbers=none,
+}
 
 % --- Evitar que los floats crucen subsecciones ---
 \makeatletter
@@ -86,15 +131,18 @@
 % --- Página 2: Blanco (Interna 0) ---
 \blankpage
 
-% --- Página 3: Índice de contenidos (Interna 1) ---
+% --- Índices ---
 \thispagestyle{empty}
 \tableofcontents
-\newpage
+\cleardoublepage
 
-% --- Página 4: Blanco (Interna 2) ---
 \thispagestyle{empty}
-\mbox{}
-\newpage
+\listoffigures
+\cleardoublepage
+
+\thispagestyle{empty}
+\listoftables
+\cleardoublepage
 
 % --- Página 5: Inicio del contenido ---
 \pagestyle{plain}

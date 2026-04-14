@@ -6,21 +6,30 @@ El campo de la tecnología financiera personal (FinTech) ha evolucionado signifi
 \subsection{Sistemas Tradicionales de Gestión Financiera}
 \label{subsec:sistemas_tradicionales}
 
-Las aplicaciones convencionales se clasifican en tres categorías principales. Las hojas de cálculo y software de contabilidad ofrecen flexibilidad pero requieren intervención manual constante \cite{personal_finance_ai2024}. Las aplicaciones de agregación bancaria como Mint o YNAB automatizan la importación de datos pero mantienen un enfoque reactivo, limitándose a presentar información histórica sin capacidad de interpretación contextual \cite{conversational_ai2023}. Los robo-advisors automatizan inversiones pero su ámbito se restringe exclusivamente a la gestión de patrimonios.
+Las aplicaciones convencionales se clasifican en tres categorías principales. Las hojas de cálculo y software de contabilidad ofrecen flexibilidad pero requieren intervención manual constante \cite{personal_finance_ai2024}. Las aplicaciones de agregación bancaria como Mint o YNAB automatizan la importación de datos pero mantienen un enfoque reactivo, limitándose a presentar información histórica sin capacidad de interpretación contextual \cite{conversational_ai2023}. Los robo-advisors automatizan inversiones pero su ámbito se restringe exclusivamente a la gestión de patrimonios, sin capacidad para asesoramiento sobre gastos cotidianos.
 
 \subsection{Técnicas de Procesamiento de Lenguaje Natural en Finanzas}
 \label{subsec:pln_finanzas}
 
-La aplicación de PLN al dominio financiero ha abierto nuevas posibilidades \cite{nlp_finance2023}. Los primeros sistemas utilizaron técnicas de clasificación supervisada como Naive Bayes y SVM, logrando precisiones aceptables (70-85\%) pero con rigidez ante nuevos patrones. El análisis de sentimiento ha permitido detectar estrés financiero, aunque enfrenta desafíos por la subjetividad del lenguaje. Las técnicas de NER con modelos basados en transformers como BERT han mejorado la precisión en extracción de entidades, pero requieren grandes volúmenes de datos etiquetados.
+La aplicación de PLN al dominio financiero ha abierto nuevas posibilidades \cite{nlp_finance2023}. Los primeros sistemas utilizaron técnicas de clasificación supervisada como Naive Bayes y SVM, logrando precisiones aceptables (70--85\%) pero con rigidez ante nuevos patrones. El análisis de sentimiento ha permitido detectar estrés financiero, aunque enfrenta desafíos por la subjetividad del lenguaje. Las técnicas de NER con modelos basados en transformers como BERT han mejorado la precisión en extracción de entidades, pero requieren grandes volúmenes de datos etiquetados.
 
-\subsection{Agentes Conversacionales en Dominios Especializados}
-\label{subsec:agentes_conversacionales}
+El enfoque de clasificación de intenciones por keywords, utilizado en nuestra línea base, representa una solución ligera y determinista adecuada para dominios bien acotados. Sus limitaciones aparecen ante preguntas compuestas o con vocabulario no anticipado.
 
-Los recientes avances en LLMs han impulsado el desarrollo de agentes conversacionales especializados \cite{tool_using_agents2023}. Los primeros sistemas utilizaban árboles de decisión y reglas predefinidas, demostrando ser frágiles ante variaciones en el lenguaje. Las arquitecturas seq-to-seq y modelos basados en transformers permitieron generar respuestas más naturales pero seguían limitados por su naturaleza sin estado.
+\subsection{Agentes Conversacionales con Herramientas}
+\label{subsec:agentes_herramientas}
 
-La generación más reciente de agentes con herramientas (tool-using agents) representa un avance fundamental \cite{langchain2023}. Sistemas como AutoGPT y los agentes LangGraph permiten que los modelos de lenguaje no solo procesen texto, sino que también ejecuten acciones y realicen análisis complejos.
+Los recientes avances en LLMs han impulsado el desarrollo de agentes conversacionales que no solo procesan lenguaje sino que también ejecutan acciones \cite{tool_using_agents2023}. El paradigma ReAct (Reasoning and Acting) \cite{react2022}, publicado en 2022, establece el marco teórico fundamental: el agente alterna entre pasos de razonamiento (\textit{Thought}) y pasos de acción (\textit{Action}), observando los resultados antes de continuar. Este bucle permite al modelo descomponer problemas complejos en subproblemas manejables.
+
+La generación más reciente de agentes con herramientas representa un avance fundamental \cite{langchain2023}. Sistemas como AutoGPT demostraron las posibilidades pero también las limitaciones de los agentes completamente autónomos. El framework LangChain introdujo una abstracción de herramientas más controlada, donde el desarrollador define las herramientas disponibles y el LLM decide cuándo y cómo usarlas.
 
 \subsection{Arquitecturas de Agentes Basados en Grafos}
 \label{subsec:arquitecturas_grafos}
 
 LangGraph emerge como una de las arquitecturas más prometedoras para el desarrollo de agentes complejos \cite{langgraph2024}. A diferencia de los sistemas sin estado, LangGraph permite mantener información contextual entre múltiples interacciones, fundamental para asistentes financieros personales \cite{memory_in_agents2023}. La arquitectura de grafos permite encadenar múltiples operaciones de razonamiento y seleccionar dinámicamente qué herramientas utilizar basándose en el contexto específico de cada consulta.
+
+La gestión de la ventana de contexto es un desafío crítico en sistemas con conversaciones largas. Las estrategias existentes incluyen el recorte por ventana deslizante \cite{memory_in_agents2023}, el resumen automático mediante LLM y el filtrado de mensajes de herramienta intermedios. Nuestra implementación combina el resumen automático con persistencia entre sesiones, permitiendo que el sistema mantenga continuidad temporal indefinida sin degradar la calidad de respuesta.
+
+\subsection{Posicionamiento de la Propuesta}
+\label{subsec:posicionamiento}
+
+Frente a las soluciones existentes, nuestra propuesta se distingue por tres características que no aparecen juntas en los papers revisados: (1) el uso de un grafo de agente especializado en finanzas personales con herramientas de dominio específico, (2) la memoria persistente con sistema de objetivos y alertas automáticas, y (3) la comparativa directa entre el enfoque clásico por intenciones y el agente moderno, facilitando la evaluación rigurosa de la mejora introducida.

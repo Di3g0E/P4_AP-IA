@@ -1,38 +1,261 @@
 \section{Propuesta y Desarrollo}
 \label{sec:propuesta}
 
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    layer/.style={rectangle, rounded corners=4pt, minimum width=10cm, minimum height=1.1cm,
+                  text centered, font=\small\bfseries, draw=black!60}
+]
+\node[layer, fill=blue!15]   (ui)     at (0, 0)    {Capa de Presentación --- Streamlit (app.py)};
+\node[layer, fill=green!15]  (agents) at (0,-1.6)  {Capa de Agentes --- AgentCoach (LangGraph) / FinancialCoach (clásico)};
+\node[layer, fill=orange!15] (analyt) at (0,-3.2)  {Capa de Analytics --- 13 funciones especializadas (pandas)};
+\node[layer, fill=gray!15]   (data)   at (0,-4.8)  {Capa de Datos --- CSV de transacciones / JSON de memoria};
+
+\draw[->, thick] (ui) -- (agents);
+\draw[->, thick] (agents) -- (analyt);
+\draw[->, thick] (analyt) -- (data);
+\end{tikzpicture}
+\caption{Arquitectura de capas del sistema coach financiero.}
+\label{fig:arquitectura_capas}
+\end{figure}
+
 La propuesta técnica se fundamenta en el diseño de un agente conversacional inteligente especializado en asesoramiento financiero personal. El sistema combina procesamiento de lenguaje natural con análisis financiero estructurado, implementando una arquitectura dual que permite comparar un agente LangGraph frente a una implementación clásica basada en clasificación de intenciones.
 
-\subsection{Arquitectura del Sistema}
+\subsection{Arquitectura General del Sistema}
 \label{subsec:arquitectura}
 
-El sistema sigue una arquitectura modular con cuatro capas principales. La capa de presentación utiliza Streamlit para proporcionar una interfaz web interactiva con métricas financieras y chat conversacional. La capa de agentes contiene dos implementaciones paralelas: el agente LangGraph con grafo de estado y el coach clásico con clasificador de intenciones. La capa de analytics implementa el motor de análisis financiero con doce funciones especializadas. La capa de datos gestiona la carga y procesamiento de transacciones mediante pandas y JSON para persistencia.
+El sistema sigue una arquitectura modular con cuatro capas principales, como se ilustra en la Figura \ref{fig:arquitectura_capas}.
 
-\subsection{Agente LangGraph}
+La capa de presentación proporciona una interfaz web interactiva con métricas financieras en tiempo real, gráficos de distribución de gasto, panel de objetivos activos y un toggle que permite cambiar entre el modo agente y el modo clásico sin reiniciar la sesión.
+
+La capa de agentes contiene dos implementaciones paralelas cuyos detalles se describen en las subsecciones siguientes. La capa de analytics implementa el motor de análisis financiero con trece funciones especializadas reutilizables por ambas implementaciones. La capa de datos gestiona la carga y procesamiento de transacciones mediante pandas, y la persistencia de memoria de usuario en archivos JSON individuales.
+
+\subsection{El Agente LangGraph}
 \label{subsec:agente_langgraph}
 
-El componente central implementa un grafo con seis nodos: load\_memory carga el estado persistente, summarize gestiona el resumen automático de conversaciones largas, agent invoca al LLM con acceso a doce herramientas, tools ejecuta las herramientas seleccionadas, check\_goals evalúa objetivos de ahorro, y save\_memory persiste el estado actualizado. El agente puede encadenar múltiples herramientas mediante bucle ReAct \cite{react2022}.
+\subsubsection{Grafo de estado}
 
-\subsection{Coach Clásico}
-\label{subsec:coach_clasico}
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    box/.style={rectangle, rounded corners=5pt, draw=black!70, minimum width=2.8cm,
+                minimum height=0.8cm, text centered, font=\small, fill=blue!10},
+    condstyle/.style={rectangle, rounded corners=5pt, draw=black!70, minimum width=2.8cm,
+                 minimum height=0.8cm, text centered, font=\scriptsize, fill=yellow!20},
+    toolbox/.style={rectangle, rounded corners=5pt, draw=black!70, minimum width=2.8cm,
+                    minimum height=0.8cm, text centered, font=\small, fill=orange!20},
+    ep/.style={circle, draw=black!70, minimum size=0.65cm, fill=gray!20, font=\scriptsize}
+]
+% Coordenadas absolutas --- columna principal (x=0)
+\node[ep]         (start) at (0, 0)    {S};
+\node[box]        (lmem)  at (0,-1.3)  {load\_memory};
+\node[box]        (sum)   at (0,-2.6)  {summarize};
+\node[box]        (agt)   at (0,-3.9)  {agent};
+\node[condstyle]  (cdt)   at (0,-5.2)  {tool\_call?};
+\node[box]        (goals) at (0,-6.5)  {check\_goals};
+\node[box]        (save)  at (0,-7.8)  {save\_memory};
+\node[ep]         (end)   at (0,-9.1)  {E};
+% Columna derecha (tools)
+\node[toolbox]    (tools) at (4,-5.2)  {tools};
 
-La implementación clásica sirve como línea base para evaluar las mejoras introducidas por la arquitectura LangGraph. Utiliza un clasificador basado en keywords que categoriza las consultas en cuatro intenciones: savings\_advice, concept\_explanation, spending\_query y general\_chat. Para cada intención, el sistema ensambla un contexto fijo con datos preseleccionados y plantillas de respuesta específicas.
+% Flechas principales
+\draw[-latex, thick] (start) -- (lmem);
+\draw[-latex, thick] (lmem)  -- (sum);
+\draw[-latex, thick] (sum)   -- (agt);
+\draw[-latex, thick] (agt)   -- (cdt);
+\draw[-latex, thick] (cdt)   -- node[right, font=\scriptsize] {No} (goals);
+\draw[-latex, thick] (goals) -- (save);
+\draw[-latex, thick] (save)  -- (end);
+% Bucle ReAct
+\draw[-latex, thick] (cdt)       -- node[above, font=\scriptsize] {Si} (tools);
+\draw[-latex, thick] (tools.north) -- ++(0,0.9) -- (agt.east);
+\end{tikzpicture}
+\caption{Grafo LangGraph del agente financiero. El bucle ReAct (agent/tools) se repite hasta que el LLM no emite llamada a herramienta.}
+\label{fig:grafo_langgraph}
+\end{figure}
 
-\subsection{Motor de Análisis Financiero}
-\label{subsec:motor_analisis}
+El componente central implementa un grafo dirigido de seis nodos conectados mediante aristas fijas y condicionales. La Figura \ref{fig:grafo_langgraph} muestra su estructura completa.
 
-El motor de analytics procesa aproximadamente 900 transacciones mensuales mediante pandas. Implementa trece funciones especializadas que incluyen resúmenes mensuales, análisis de tendencias, desglose por categoría, detección de anomalías, gestión de gastos recurrentes y análisis de inversiones. El sistema utiliza técnicas estadísticas basadas en desviación estándar y percentiles para identificar patrones anómalos y generar alertas personalizadas. Adicionalmente, el módulo de inversiones analiza automáticamente diferentes instrumentos financieros como Letras del Tesoro, acciones Apple, S\&P 500, Bitcoin, planes de pensiones y fondos de inversión, proporcionando un resumen completo del portafolio de inversión del usuario.
+\newpage
+\subsubsection{Estado del grafo}
 
-Las trece herramientas disponibles para el agente LangGraph se dividen en dos categorías: nueve herramientas de análisis financiero (monthly\_summary, spending\_trends, category\_breakdown, savings\_rate, anomalies, recurring\_expenses, top\_expenses, search\_by\_description, investment\_summary) y cuatro herramientas de gestión de objetivos (set\_goal, check\_goal\_progress, list\_goals, remove\_goal).
+El estado compartido entre nodos se define mediante un \texttt{TypedDict} que agrupa tres campos: la lista de mensajes de conversación (con un reducer acumulativo \texttt{add\_messages}), la memoria persistente del usuario (objetivos, alertas emitidas y resumen acumulado) y las alertas generadas en la ejecución actual. El reducer \texttt{add\_messages} de LangGraph asigna identificadores únicos a cada mensaje y gestiona su eliminación mediante \texttt{RemoveMessage}, lo que es fundamental para el nodo de resumen.
+
+\subsubsection{Descripción de los nodos}
+
+La Tabla \ref{tab:nodos} describe la responsabilidad de cada nodo del grafo.
+
+\begin{table}[h]
+\centering
+\caption{Nodos del grafo LangGraph y su función.}
+\label{tab:nodos}
+\begin{tabular}{@{}lp{4cm}p{5.5cm}@{}}
+\toprule
+\textbf{Nodo} & \textbf{Función} & \textbf{Entrada / Salida} \\
+\midrule
+\texttt{load\_memory} & Carga la memoria del usuario desde disco y sincroniza los goals con las tools & JSON de disco $\rightarrow$ estado actualizado con memory \\
+\addlinespace
+\texttt{summarize} & Si hay $>$20 mensajes, resume los más antiguos y elimina los resumidos del estado & messages (lista) $\rightarrow$ RemoveMessage + memory[``summary''] \\
+\addlinespace
+\texttt{agent} & Invoca al LLM con system prompt, historial y 13 tools bindeadas & messages $\rightarrow$ AIMessage (con o sin tool\_calls) \\
+\addlinespace
+\texttt{tools} & Ejecuta la herramienta seleccionada por el LLM y devuelve el resultado & tool\_call $\rightarrow$ ToolMessage con resultado \\
+\addlinespace
+\texttt{check\_goals} & Evalúa todos los objetivos activos y genera alertas si el gasto supera el 80\% del límite & memory[goals] $\rightarrow$ current\_alerts + past\_alerts actualizado \\
+\addlinespace
+\texttt{save\_memory} & Sincroniza goals modificados por las tools y persiste la memoria completa & estado $\rightarrow$ JSON en disco \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Las Herramientas del Agente}
+\label{subsec:herramientas}
+
+El agente dispone de trece herramientas divididas en dos categorías. Cada herramienta es un wrapper con el decorador \texttt{@tool} de LangChain sobre funciones ya existentes del motor de analytics o sobre lógica nueva de gestión de objetivos. El docstring de cada tool es crítico: es la descripción que el LLM lee para decidir cuándo y cómo usarla. La Tabla \ref{tab:tools} enumera las trece herramientas disponibles.
+
+\begin{table}[h]
+\centering
+\caption{Las trece herramientas del agente financiero.}
+\label{tab:tools}
+\begin{tabular}{@{}llp{5cm}@{}}
+\toprule
+\textbf{Categoría} & \textbf{Herramienta} & \textbf{Descripción} \\
+\midrule
+\multirow{9}{*}{Analytics} & \texttt{monthly\_summary} & Resumen mensual: ingresos, gastos, ahorro, desglose \\
+ & \texttt{spending\_trends} & Tendencias de gasto en los últimos N meses \\
+ & \texttt{category\_breakdown} & Desglose por categoría con totales y \% \\
+ & \texttt{savings\_rate} & Tasa de ahorro mensual \\
+ & \texttt{anomalies} & Gastos anómalamente altos ($>$ media $+ 1.5\sigma$) \\
+ & \texttt{recurring\_expenses} & Suscripciones y gastos periódicos detectados \\
+ & \texttt{investment\_summary} & Resumen del portafolio de inversiones \\
+ & \texttt{top\_expenses} & N mayores gastos, filtrable por área \\
+ & \texttt{search\_by\_description} & Búsqueda de transacciones por texto libre \\
+\midrule
+\multirow{4}{*}{Objetivos} & \texttt{set\_goal} & Define un límite de gasto mensual por categoría \\
+ & \texttt{check\_goal\_progress} & Progreso actual vs. límite definido \\
+ & \texttt{list\_goals} & Lista todos los objetivos activos \\
+ & \texttt{remove\_goal} & Elimina un objetivo de una categoría \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Sistema de Memoria Persistente}
 \label{subsec:memoria_persistente}
 
-La memoria persistente permite al sistema mantener estado entre sesiones. Los usuarios pueden establecer objetivos de gasto máximo mensual por categoría, que se almacenan en archivos JSON individuales. El sistema monitorea continuamente el progreso hacia estos objetivos y genera alertas automáticas cuando el gasto actual supera el 80\% del límite establecido.
+\subsubsection{Estructura de datos}
 
-Adicionalmente, el sistema implementa un mecanismo de resumen automático de conversaciones que se activa cuando el historial supera un umbral predefinido. Un LLM dedicado genera resúmenes concisos que capturan temas tratados, datos financieros relevantes y decisiones tomadas. Estos resúmenes se persisten en memoria y permiten mantener conversaciones largas sin exceder la ventana de contexto del modelo principal.
+La memoria de cada usuario se serializa en un archivo JSON individual en el directorio \texttt{memory/}. La estructura incluye cuatro campos: \texttt{goals} (lista de objetivos activos con categoría, límite, fecha límite y fecha de creación), \texttt{past\_alerts} (claves de alertas ya emitidas para evitar repeticiones), \texttt{savings\_tips\_given} (consejos previos, reservado para uso futuro) y \texttt{summary} (resumen acumulado de conversaciones anteriores).
+
+\newpage
+\subsubsection{Sistema de alertas}
+
+El nodo \texttt{check\_goals} evalúa todos los objetivos activos al final de cada interacción. Las alertas se generan cuando el porcentaje consumido supera el 80\% o el 100\% del límite, y se registran en \texttt{past\_alerts} con una clave compuesta \texttt{\{categoria\}\_\{YYYY-MM\}\_\{umbral\}} para evitar repeticiones. El umbral se redondea a decenas, de modo que si el porcentaje pasa del 80\% al 95\% en el mismo mes, se generan dos alertas independientes.
+
+Las alertas se inyectan automáticamente al final de la respuesta del agente, garantizando que el usuario siempre esté informado independientemente de qué haya preguntado.
+
+\subsection{Nodo de Resumen Automático}
+\label{subsec:nodo_resumen}
+
+\subsubsection{Motivación}
+
+Los modelos de lenguaje tienen una ventana de contexto finita (128k tokens en Llama 3.3 70B vía Groq). En conversaciones largas, el historial acumulado en \texttt{state[``messages'']} puede exceder este límite, provocando errores en la API o degradación de calidad. La estrategia de resumen automático soluciona este problema de forma transparente para el usuario.
+
+\subsubsection{Funcionamiento}
+
+El nodo \texttt{summarize} se ejecuta en cada turno de conversación, entre \texttt{load\_memory} y \texttt{agent}. Si el número de mensajes en el estado no supera el umbral (\texttt{SUMMARIZATION\_THRESHOLD = 20}), el nodo retorna sin modificar el estado. Si lo supera, toma todos los mensajes excepto los 6 más recientes, los convierte a texto plano y los envía a un LLM resumidor dedicado (con temperatura baja y \texttt{max\_tokens} limitado). Si ya existía un resumen previo, el prompt solicita integrarlo con los nuevos mensajes. Tras obtener el nuevo resumen, este se almacena en \texttt{memory[``summary'']} y los mensajes resumidos se eliminan del estado mediante \texttt{RemoveMessage}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    session/.style={rectangle, rounded corners=4pt, draw=black!70, minimum width=2.8cm,
+                    minimum height=0.9cm, text centered, font=\small, fill=blue!8},
+    mem/.style={rectangle, rounded corners=4pt, draw=black!70, minimum width=2.8cm,
+                minimum height=0.8cm, text centered, font=\scriptsize, fill=orange!15}
+]
+\node[session] (s1) at (0,0)    {Sesion 1 (5 msgs)};
+\node[mem]     (m1) at (0,-1.5) {summary: ``''};
+\node[session] (s2) at (5,0)    {Sesion 2 (12 msgs)};
+\node[mem]     (m2) at (5,-1.5) {summary: ``'', alerta 1};
+\node[session] (s3) at (10,0)   {Sesion 3 (22 msgs)};
+\node[mem]     (m3) at (10,-1.5) {summary: ``...'', 16 msgs borrados};
+
+\draw[-latex, thick] (s1) -- (m1) node[midway, right, font=\scriptsize\itshape] {save};
+\draw[-latex, thick] (m1) -- (s2) node[midway, above, font=\scriptsize\itshape] {load};
+\draw[-latex, thick] (s2) -- (m2) node[midway, right, font=\scriptsize\itshape] {save};
+\draw[-latex, thick] (m2) -- (s3) node[midway, above, font=\scriptsize\itshape] {load};
+\draw[-latex, thick] (s3) -- (m3) node[midway, right, font=\scriptsize\itshape] {summarize+save};
+\end{tikzpicture}
+\caption{Ciclo de vida del resumen automatico a lo largo de sesiones sucesivas. El nodo \texttt{summarize} se activa en la Sesion~3 cuando el umbral de 20 mensajes se supera.}
+\label{fig:resumen_flujo}
+\end{figure}
+
+La Figura \ref{fig:resumen_flujo} ilustra el ciclo de vida de la memoria de resumen a lo largo de varias sesiones.
+
+\subsubsection{Parámetros configurables}
+
+Los parámetros del resumen se centralizan en \texttt{config.py}: \texttt{SUMMARIZATION\_THRESHOLD} (20 mensajes antes de activar el resumen), \texttt{KEEP\_RECENT\_MESSAGES} (6 mensajes recientes que se preservan literalmente) y \texttt{SUMMARY\_MAX\_TOKENS} (400 tokens máximos para el resumen generado).
+
+\subsection{El Coach Clásico como Línea Base}
+\label{subsec:coach_clasico}
+
+La implementación clásica (\texttt{FinancialCoach}) sirve como línea base para evaluar cualitativamente las mejoras introducidas por el agente LangGraph. Su flujo es determinista y de una sola pasada:
+
+\begin{enumerate}
+    \item El mensaje del usuario se clasifica mediante un score de keywords en cuatro intenciones: \texttt{savings\_advice}, \texttt{concept\_explanation}, \texttt{spending\_query} y \texttt{general\_chat}.
+    \item Según la intención, un bloque \texttt{if/elif} en \texttt{prompts.py} determina qué funciones de analytics llamar y ensambla un bloque de contexto fijo.
+    \item El contexto completo (perfil + datos + historial reciente) se envía al LLM en una única llamada.
+    \item La respuesta se devuelve directamente sin inspección del resultado.
+\end{enumerate}
+
+La ventana deslizante de historial se limita a \texttt{MAX\_HISTORY\_TURNS = 10} turnos (20 mensajes) sin gestión de contexto adicional.
+
+\subsection{Comparativa: Coach Clásico vs. Agente LangGraph}
+\label{subsec:comparativa}
+
+La Tabla \ref{tab:comparativa} resume las diferencias arquitectónicas y funcionales entre ambas implementaciones.
+
+\begin{table}[t]
+\centering
+\caption{Comparativa entre el Coach Clásico y el Agente LangGraph.}
+\label{tab:comparativa}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Aspecto} & \textbf{Coach Clásico} & \textbf{Agente LangGraph} \\
+\midrule
+Decisión sobre datos & El código (if/elif) & El LLM (dinámico) \\
+Flujo & Pipeline lineal, una pasada & Bucle ReAct multi-paso \\
+Preguntas compuestas & Contexto parcial (un intent) & Encadena varias tools \\
+Estado entre sesiones & Sin estado & Memoria JSON persistente \\
+Objetivos de ahorro & No soportado & Set/check/list/remove \\
+Alertas automáticas & No soportado & Al superar el 80\% del límite \\
+Contexto al LLM & Bloque fijo por intent & Solo datos que el LLM solicitó \\
+Gestión del contexto & Ventana deslizante fija & Resumen automático acumulativo \\
+Latencia típica & 1--2 s & 2--5 s \\
+Robustez ante ambigüedad & Depende de keywords & Semántica del LLM \\
+Fallback & No (única opción) & Toggle en sidebar \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Interfaz de Usuario}
+\label{subsec:interfaz}
+
+La interfaz Streamlit (\texttt{app.py}) ofrece un diseño de dos columnas. El sidebar izquierdo presenta las métricas financieras del perfil (ingresos totales, gastos totales, tasa de ahorro), el gráfico de distribución de gastos por categoría, los objetivos activos del usuario (solo en modo agente), el toggle de modo agente/clásico y el selector de modelo LLM. El área principal contiene el historial de conversación y el campo de entrada de texto.
+
+El toggle entre modos es especialmente relevante para la evaluación: permite al usuario comparar en tiempo real las respuestas de ambas implementaciones ante la misma pregunta. Al cambiar de modo, la instancia del coach se recrea y la conversación se reinicia, manteniendo los datos de memoria en disco intactos.
 
 \subsection{Implementación Técnica}
 \label{subsec:implementacion_tecnica}
 
-El proyecto se implementa utilizando Python 3.12 con LangGraph \cite{langgraph2024}, Groq API para los modelos de lenguaje \cite{groq2024}, Streamlit para la interfaz \cite{streamlit2021} y pandas para el análisis de datos \cite{pandas2020}. La aplicación soporta cuatro modelos LLM diferentes: Llama 3.3 70B (modelo por defecto), Llama 3.1 8B, Mixtral 8x7B y Gemma 2 9B, permitiendo al usuario seleccionar el balance óptimo entre calidad de respuesta y velocidad de procesamiento según sus necesidades.
+El proyecto se implementa con Python 3.12. Las dependencias principales son LangGraph \cite{langgraph2024} para el grafo del agente, LangChain-Groq para la integración con la API de inferencia \cite{groq2024}, Streamlit para la interfaz \cite{streamlit2021} y pandas para el análisis de datos \cite{pandas2020}. La suite de tests consta de 60 tests distribuidos en cinco módulos:
+
+\begin{itemize}
+    \item \texttt{test\_loader.py}: 8 tests --- carga y parseo del CSV de transacciones.
+    \item \texttt{test\_analytics.py}: 17 tests --- funciones del motor de analytics.
+    \item \texttt{test\_agent\_tools.py}: 18 tests --- 8 de herramientas de analytics y 8 de gestión de objetivos.
+    \item \texttt{test\_memory.py}: 9 tests --- carga, guardado, roundtrip y compatibilidad con memorias antiguas.
+    \item \texttt{test\_summarize.py}: 8 tests --- estructura del grafo, configuración y comportamiento del nodo de resumen (con LLM mockeado).
+\end{itemize}
+
+Todos los tests se ejecutan en menos de 4 segundos sin conexión a la API, gracias al uso de mocks para los componentes LLM.

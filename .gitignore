@@ -37,3 +37,6 @@ doc/*.run.xml
 doc/*.synctex.gz
 doc/*.synctex(busy)
 doc/*.synctex
+doc/*.fls
+doc/*.fdb_latexmk
+doc/*.bcf

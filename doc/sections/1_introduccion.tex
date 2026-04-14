@@ -3,7 +3,7 @@
 
 El propósito fundamental de este proyecto es el desarrollo de un sistema de asesoramiento financiero personal basado en agentes de inteligencia artificial generativa. En un entorno donde el volumen de transacciones digitales crece exponencialmente \cite{fintech2023}, la capacidad de analizar datos financieros de manera inteligente deja de ser un lujo para convertirse en una necesidad técnica. El sistema diseñado actúa como un coach financiero activo capaz de comprender consultas en lenguaje natural, analizar patrones de gasto y proporcionar recomendaciones personalizadas.
 
-El núcleo de la investigación se centra en la implementación de un agente inteligente utilizando la arquitectura LangGraph \cite{langgraph2024}, que permite al sistema tomar decisiones dinámicas sobre qué información consultar y cómo responder a las consultas del usuario. A diferencia de los sistemas basados en reglas estáticas \cite{conversational_ai2023}, el agente desarrollado posee la capacidad de razonar sobre los datos financieros y mantener un estado persistente entre sesiones.
+El núcleo de la investigación se centra en la implementación de un agente inteligente utilizando la arquitectura LangGraph \cite{langgraph2024}, que permite al sistema tomar decisiones dinámicas sobre qué información consultar y cómo responder a las consultas del usuario. A diferencia de los sistemas basados en reglas estáticas \cite{conversational_ai2023}, el agente desarrollado posee la capacidad de razonar sobre los datos financieros mediante un bucle de razonamiento-acción (ReAct \cite{react2022}) y mantener un estado persistente entre sesiones.
 
 Finalmente, el proyecto destaca por su capacidad de adaptación continua mediante mecanismos de memoria persistente \cite{memory_in_agents2023}. Esta característica permite al sistema evolucionar con el usuario, recordando objetivos financieros y generando alertas contextualizadas, lo que lo posiciona como una solución innovadora en el campo de la tecnología financiera personal \cite{personal_finance_ai2024}.
 
@@ -12,13 +12,15 @@ Finalmente, el proyecto destaca por su capacidad de adaptación continua mediant
 
 Los objetivos principales de esta práctica se estructuran en tres niveles complementarios:
 
-\textbf{Objetivo técnico:} Diseñar e implementar un agente conversacional basado en LangGraph capaz de analizar datos financieros personales utilizando un conjunto de doce herramientas especializadas. El sistema debe demostrar capacidad de razonamiento multi-paso, encadenamiento de herramientas y mantenimiento de estado persistente.
+\textbf{Objetivo técnico:} Diseñar e implementar un agente conversacional basado en LangGraph capaz de analizar datos financieros personales utilizando un conjunto de trece herramientas especializadas. El sistema debe demostrar capacidad de razonamiento multi-paso, encadenamiento de herramientas, gestión de la ventana de contexto mediante resumen automático y mantenimiento de estado persistente entre sesiones.
 
-\textbf{Objetivo funcional:} Desarrollar una aplicación funcional que permita a los usuarios establecer objetivos de ahorro, recibir alertas personalizadas, consultar análisis detallados de sus gastos y obtener recomendaciones financieras contextualizadas basadas en su historial de transacciones real.
+\textbf{Objetivo funcional:} Desarrollar una aplicación funcional que permita a los usuarios establecer objetivos de ahorro por categoría, recibir alertas automáticas cuando se acercan al límite, consultar análisis detallados de sus gastos y obtener recomendaciones financieras contextualizadas basadas en su historial de transacciones real.
+
+\textbf{Objetivo comparativo:} Mantener una implementación clásica basada en clasificación de intenciones por keywords como línea base, permitiendo evaluar cuantitativamente y cualitativamente las mejoras introducidas por la arquitectura de agente frente al enfoque determinista tradicional.
 
 \subsection{Alcance y Limitaciones}
 \label{subsec:alcance}
 
-El proyecto se centra exclusivamente en el análisis de datos financieros personales estructurados, utilizando como fuente principal un conjunto de transacciones bancarias en formato CSV.
+El proyecto se centra exclusivamente en el análisis de datos financieros personales estructurados, utilizando como fuente principal un conjunto de transacciones bancarias en formato CSV heredado de la Práctica 2 de la asignatura (aproximadamente 900 transacciones reales).
 
-Las limitaciones principales del sistema incluyen: la dependencia de la calidad y completitud de los datos de entrada o la incapacidad de procesar información financiera no estructurada (como facturas o documentos PDF). Además, el sistema no realiza predicciones financieras complejas ni ofrece recomendaciones de inversión, centrándose exclusivamente en el análisis de gastos y consejos de ahorro basados en patrones históricos.
+Las limitaciones principales del sistema incluyen: la dependencia de la calidad y completitud de los datos de entrada, la ausencia de integración con APIs bancarias en tiempo real, y la dependencia del servicio externo Groq API para la inferencia del modelo de lenguaje.
